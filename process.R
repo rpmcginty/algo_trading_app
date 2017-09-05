@@ -4,17 +4,15 @@ library(magrittr)
 library(dplyr)
 library(readr)
 library(data.table)
-library(tidyr)
-library(magrittr)
-library(quantmod)
-library(stringr)
-library(purrr)
-library(devtools)
+library(AlphaVantageClient)
 
-require(crosstalk)
+setAPIKey("RG5RUC1X8147FK1D")
+example_prices <- fetchSeries(function_nm = "time_series_daily", symbol = "msft")
+example_sma <- fetchSeries(function_nm = "sma", symbol = "msft", interval = "daily",
+                           time_period = 10, series_type = "open")
 
+example_sma
 
-install.packages("highcharter")
 update.packages()
 
 devtools::install_github("jbkunst/highcharter")
