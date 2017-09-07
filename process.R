@@ -9,58 +9,47 @@ library(readr)
 library(data.table)
 require(AlphaVantageClient)
 
-
-
+#TICKER ACCEPTS VALID STOCK TICKERS (AMZN, AAPL, etc)
 getAlphaData <- function(ticker) {
+    x <- TRUE
     setAPIKey("RG5RUC1X8147FK1D")
 
     time_series_daily_prices <- fetchSeries(function_nm = "time_series_daily", symbol = ticker, outputsize = "full", datatype = 'json')
-    daily_sma <- fetchSeries(function_nm = "sma", symbol = "msft", interval = "daily",
-                           time_period = 10, series_type = "open", datatype = 'json')
+    time_series_intraday_prices <- fetchSeries(function_nm = "time_series_intraday", symbol = ticker, outputsize = "full", datatype = 'json', interval = '15min')
+    time_series_daily_adjusted <- fetchSeries(function_nm = "time_series_daily_adjusted", symbol = ticker, outputsize = "full", datatype = 'json')
+    time_series_weekly <- fetchSeries(function_nm = "time_series_weekly", symbol = ticker, outputsize = "full", datatype = 'json')
+    time_series_monthly <- fetchSeries(function_nm = "time_series_monthly", symbol = ticker, outputsize = "full", datatype = 'json')
+
+    #Technical Indicators
+    daily_sma <- fetchSeries(function_nm = "sma", symbol = ticker, interval = "daily", time_period = 60, series_type = "close")
+
+    weekly_sma <- fetchSeries(function_nm = "sma", symbol = ticker, interval = "weekly",
+                            time_period = 50, series_type = "close", datatype = 'json')
+
+    monthly_sma <- fetchSeries(function_nm = "sma", symbol = ticker, interval = "monthly",
+                             time_period = 15, series_type = "close", datatype = 'json')
+
 
     #Reformatting to a date format
-    stockprice <- time_series_daily_prices$xts_object
-    sma1 <- daily_sma$xts_object
+    time_series_daily_prices <- time_series_daily_prices$xts_object
+    time_series_intraday_prices <- time_series_intraday_prices$xts_object
+    time_series_daily_adjusted <- time_series_daily_adjusted$xts_object
+    time_series_weekly <- time_series_weekly$xts_object
+    time_series_monthly <- time_series_monthly$xts_object
 
+    daily_sma <- daily_sma$xts_object
+    weekly_sma <- weekly_sma$xts_object
+    monthly_sma <- monthly_sma$xts_object
 
-    #Stockprice becomes input.raw
-    input.raw <- stockprice
-
-    #make the raw data usable by geting rid of NAs
-    #input.data <- input.raw[!is.na(input.raw$price_local),]
-
-    #The TTR packages work best with xts time series
-    price <- xts(input.raw$"4. close")
-    volume <- xts(input.raw$"5. volume")
-
-    #############TTR Package Calculations & Assignment############
-
-    #Relative Strength
-    wb_RSI <- RSI(price, n = 14)
-
-    #Simple Moving Average n = 50
-    wb_SMA50 <- SMA(price, 50)
-
-    #Simple Moving Average n = 200
-    wb_SMA200 <- SMA(price, 200)
-
-    #Rate of Change
-    wb_ROC <- ROC(price, 25)
-
-    #Moving Average Convergence Divergence
-    wb_MACD <- MACD(price, nFast = 12, nSlow = 26, nSig = 9)
-
-    #On Balance Value
-    wb_OBV <- OBV(price = price, volume = volume)
-
-    #Bollinger Bands
-    bbSMA = BBands(price, sd = 2.0, n = 26, maType = SMA)
+    #HERE IS WHERE I WILL COMPARE THE DATA AGAINST ITSELF TO GENERATE A TREND JUDGEMENT
 
     #Merging as a DataFrame
-    output.data <- data.frame(input.raw, wb_RSI, wb_SMA50, wb_SMA200, wb_OBV, wb_ROC, wb_MACD, bbSMA)
+    #output.data <- data.frame()
 
-    write.csv(output.data, file = "output_data.csv", row.names = FALSE)
-    info <- output.data
-    return(info)
+    if (x) {
+        return("buy")
+    } else {
+        return("sell")
+    }
 }
 getAlphaData("AMZN")
