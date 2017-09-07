@@ -1,66 +1,66 @@
 library(xts)
 library(TTR)
+require(httr)
+library(rmarkdown)
+library(testthat)
 library(magrittr)
 library(dplyr)
 library(readr)
 library(data.table)
-library(AlphaVantageClient)
+require(AlphaVantageClient)
 
-setAPIKey("RG5RUC1X8147FK1D")
-example_prices <- fetchSeries(function_nm = "time_series_daily", symbol = "msft")
-example_sma <- fetchSeries(function_nm = "sma", symbol = "msft", interval = "daily",
-                           time_period = 10, series_type = "open")
 
-example_sma
 
-update.packages()
+getAlphaData <- function(ticker) {
+    setAPIKey("RG5RUC1X8147FK1D")
 
-devtools::install_github("jbkunst/highcharter")
-#Reading in the data
-input.raw <- read_csv("input.csv", na = '', col_types = "cdd")
+    time_series_daily_prices <- fetchSeries(function_nm = "time_series_daily", symbol = ticker, outputsize = "full", datatype = 'json')
+    daily_sma <- fetchSeries(function_nm = "sma", symbol = "msft", interval = "daily",
+                           time_period = 10, series_type = "open", datatype = 'json')
 
-#Reformatting the date_value column to a date format
-input.raw$date_value <- as.Date(input.raw$date_value, "%m/%d/%Y")
+    #Reformatting to a date format
+    stockprice <- time_series_daily_prices$xts_object
+    sma1 <- daily_sma$xts_object
 
-#make the raw data usable by geting rid of NAs
-input.data <- input.raw[!is.na(input.raw$price_local),]
 
-#The TTR packages work best with xts time series
-price <- xts(input.data$price_local, order.by = input.data$date_value,)
-volume <- xts(input.data$volume, order.by = input.data$date_value)
+    #Stockprice becomes input.raw
+    input.raw <- stockprice
 
-#############TTR Package Calculations & Assignment############
+    #make the raw data usable by geting rid of NAs
+    #input.data <- input.raw[!is.na(input.raw$price_local),]
 
-#Relative Strength
-wb_RSI <- RSI(price, n = 14)
+    #The TTR packages work best with xts time series
+    price <- xts(input.raw$"4. close")
+    volume <- xts(input.raw$"5. volume")
 
-#Simple Moving Average n = 50
-wb_SMA50 <- SMA(price, 50)
+    #############TTR Package Calculations & Assignment############
 
-#Simple Moving Average n = 200
-wb_SMA200 <- SMA(price, 200)
+    #Relative Strength
+    wb_RSI <- RSI(price, n = 14)
 
-#Rate of Change
-wb_ROC <- ROC(price, 25)
+    #Simple Moving Average n = 50
+    wb_SMA50 <- SMA(price, 50)
 
-#Moving Average Convergence Divergence
-wb_MACD <- MACD(price, nFast = 12, nSlow = 26, nSig = 9)
+    #Simple Moving Average n = 200
+    wb_SMA200 <- SMA(price, 200)
 
-#On Balance Value
-wb_OBV <- OBV(price = price, volume = volume)
+    #Rate of Change
+    wb_ROC <- ROC(price, 25)
 
-#Bollinger Bands
-bbSMA = BBands(price, sd = 2.0, n = 26, maType = SMA)
+    #Moving Average Convergence Divergence
+    wb_MACD <- MACD(price, nFast = 12, nSlow = 26, nSig = 9)
 
-#Merging as a DataFrame
-output.data <- data.frame(input.data, wb_RSI, wb_SMA50, wb_SMA200, wb_OBV, wb_ROC, wb_MACD, bbSMA)
+    #On Balance Value
+    wb_OBV <- OBV(price = price, volume = volume)
 
-setnames(output.data, old = c('EMA', 'wb_ROC', 'SMA', 'SMA.1', 'macd', 'obv'), new = c('RSI (14)', 'ROC', 'SMA (50)', 'SMA (200)', 'MACD', 'OBV'))
+    #Bollinger Bands
+    bbSMA = BBands(price, sd = 2.0, n = 26, maType = SMA)
 
-MACD1 <- xts(output.data$MACD, order.by = output.data$date_value)
+    #Merging as a DataFrame
+    output.data <- data.frame(input.raw, wb_RSI, wb_SMA50, wb_SMA200, wb_OBV, wb_ROC, wb_MACD, bbSMA)
 
-RSI.SellLevel <- xts(rep(70, NROW(wb_RSI)), index(wb_RSI))
-RSI.BuyLevel <- xts(rep(30, NROW(wb_RSI)), index(wb_RSI))
-
-write.csv(output.data, file = "output_data.csv", row.names = FALSE)
-write.table(output.data, file = "output_text.txt", row.names = FALSE)
+    write.csv(output.data, file = "output_data.csv", row.names = FALSE)
+    info <- output.data
+    return(info)
+}
+getAlphaData("AMZN")
