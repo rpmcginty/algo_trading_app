@@ -1,0 +1,6 @@
+numpy
+scipy
+pandas>=0.18.1
+matplotlib
+urllib3
+alpha_vantage
