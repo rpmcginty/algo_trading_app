@@ -1,6 +1,27 @@
-*.key
-*.pyc
+  # Backups, from Text files #
+############################
 *.pyo
+*.pyc
+*~
 
-.idea/*
-.vscode/*
+# Configuration files #
+#######################
+*.path
+*.parameters
+!default.parameters
+*.cfg
+!default.cfg
+
+# API key files #
+#################
+*.key
+
+
+# PyCharm Variables #
+#####################
+.idea/
+
+
+# vscode Variables #
+#####################
+.vscode/
