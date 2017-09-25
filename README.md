@@ -6,7 +6,8 @@ A collaborative effort for long-term passive investing based on economic indicat
 ## Setup
 
 
-conda create --name algotrading python=3.6
+conda create --name algotrading python=2.7
+source activate algotrading
 conda config --append channels conda-forge
 conda install --yes --file requirements.txt
 
