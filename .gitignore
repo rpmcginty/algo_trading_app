@@ -1,0 +1,6 @@
+*.key
+*.pyc
+*.pyo
+
+.idea/*
+.vscode/*
